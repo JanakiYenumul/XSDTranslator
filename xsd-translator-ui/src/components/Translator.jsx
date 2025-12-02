@@ -6,7 +6,11 @@ export default function Translator() {
     const [jsonSchema, setJsonSchema] = useState("");
     const [xmlXsd, setXmlXsd] = useState("");
     const [mapping, setMapping] = useState("");
+
+    const [inputMode, setInputMode] = useState("xml");
     const [inputXml, setInputXml] = useState("");
+    const [inputJson, setInputJson] = useState("");
+
     const [outputXml, setOutputXml] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -20,7 +24,7 @@ export default function Translator() {
         try {
             const response = await axios.post("https://organic-giggle-vpv65ggv6v5fx7jq-5000.app.github.dev/generate-mapping", {
                 jsonSchema,
-                xmlXsd
+                xmlXsd,
             });
 
             setMapping(response.data.mapping);
@@ -32,22 +36,34 @@ export default function Translator() {
     };
 
     const transformXml = async () => {
-        if (!inputXml || !mapping || !xmlXsd) {
-            alert("Please provide Input XML, Mapping JSON, and XML XSD.");
+        if (!mapping || !xmlXsd) {
+            alert("Mapping and XML XSD are required.");
+            return;
+        }
+
+        if (inputMode === "xml" && !inputXml) {
+            alert("Please provide a valid XML Input.");
+            return;
+        }
+
+        if (inputMode === "json" && !inputJson) {
+            alert("Please provide a JSON Input.");
             return;
         }
 
         setLoading(true);
         try {
-            const response = await axios.post("https://organic-giggle-vpv65ggv6v5fx7jq-5000.app.github.dev/transform-xml", {
-                inputXml,
-                mappingJson: mapping,
-                xmlXsd
-            });
+            const payload =
+                inputMode === "xml"
+                    ? { inputXml, mappingJson: mapping, xmlXsd }
+                    : { inputJson: JSON.parse(inputJson), mappingJson: mapping, xmlXsd };
+
+            const response = await axios.post("https://organic-giggle-vpv65ggv6v5fx7jq-5000.app.github.dev/transform-xml", payload);
 
             setOutputXml(response.data);
         } catch (err) {
-            alert("Invalid XML structure");
+            console.error(err);
+            alert("Error transforming XML");
         }
         setLoading(false);
     };
@@ -82,23 +98,43 @@ export default function Translator() {
                     </button>
                 </div>
 
+
                 <div className="row-two-cols">
                     <div className="box">
                         <h3>Mapping Template</h3>
                         <textarea
                             value={mapping}
                             onChange={(e) => setMapping(e.target.value)}
-                            placeholder="Mapping Template will appear here..."
+                            placeholder="Mapping JSON Appears Here..."
                         />
                     </div>
 
                     <div className="box">
-                        <h3>Quote Details</h3>
-                        <textarea
-                            value={inputXml}
-                            onChange={(e) => setInputXml(e.target.value)}
-                            placeholder="Paste your Quote Details here..."
-                        />
+                        <div className="input-header">
+                            <h3 className="quote-heading">Quote Details</h3>
+                            <select
+                                className="input-toggle"
+                                value={inputMode}
+                                onChange={(e) => setInputMode(e.target.value)}
+                            >
+                                <option value="xml">XML</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+
+                        {inputMode === "xml" ? (
+                            <textarea
+                                value={inputXml}
+                                onChange={(e) => setInputXml(e.target.value)}
+                                placeholder="Paste Input XML..."
+                            />
+                        ) : (
+                            <textarea
+                                value={inputJson}
+                                onChange={(e) => setInputJson(e.target.value)}
+                                placeholder='Paste Input JSON...'
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -110,7 +146,11 @@ export default function Translator() {
 
                 <div className="output-box">
                     <h3>Quote Request</h3>
-                    <textarea value={outputXml} readOnly placeholder="Quote Request will appear here..." />
+                    <textarea
+                        value={outputXml}
+                        readOnly
+                        placeholder="Transformed XML Will Appear Here..."
+                    />
                 </div>
             </div>
         </div>
