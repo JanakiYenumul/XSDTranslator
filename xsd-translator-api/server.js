@@ -108,44 +108,63 @@ app.post("/generate-mapping", async (req, res) => {
 
         res.json({ mapping: mappingText });
     } catch (err) {
-        console.error("Mapping Error:", err);
+        console.error("Error in generating mapping :", err);
         res.status(500).json({ error: "Failed to generate mapping" });
     }
 });
 
 app.post("/transform-xml", (req, res) => {
-    try {
-        const { inputXml, mappingJson, xmlXsd } = req.body;
+  try {
+    const { inputXml, inputJson, mappingJson, xmlXsd } = req.body;
 
-        if (!inputXml || !mappingJson || !xmlXsd) {
-            return res
-                .status(400)
-                .json({ error: "inputXml, mappingJson, xmlXsd are required" });
-        }
-
-        const mapping = JSON.parse(mappingJson);
-        const targetRootName = extractRootNameFromXsd(xmlXsd);
-        const parser = new XMLParser({ ignoreAttributes: false });
-        const parsed = parser.parse(inputXml);
-
-        const inputRoot = Object.keys(parsed)[0];
-        const stripped = parsed[inputRoot];
-
-        const flatInput = flattenObject(stripped);
-
-        const nestedXmlObj = buildNestedXmlObject(mapping, flatInput, targetRootName);
-
-        const builder = new XMLBuilder({ format: true });
-        const finalXml = builder.build(nestedXmlObj);
-
-        res.set("Content-Type", "application/xml");
-        res.send(finalXml);
-    } catch (err) {
-        console.error("Transform Error:", err);
-        res
-            .status(500)
-            .json({ error: "Failed to transform XML", details: err.message });
+    if (!mappingJson || !xmlXsd) {
+      return res
+        .status(400)
+        .json({ error: "mappingJson and xmlXsd are required" });
     }
+
+    console.log("inputXml:", inputXml);
+    console.log("inputJson:", inputJson);
+
+    const mapping = JSON.parse(mappingJson);
+
+    // Extract target XML root
+    const targetRootName = extractRootNameFromXsd(xmlXsd);
+
+    let flatInput = {};
+
+    if (inputXml) {
+      const parser = new XMLParser({ ignoreAttributes: false });
+      const parsed = parser.parse(inputXml);
+
+      const rootKey = Object.keys(parsed)[0];
+      const stripped = parsed[rootKey];
+
+      flatInput = flattenObject(stripped);
+    }
+
+    else if (inputJson) {
+      flatInput = flattenObject(inputJson);
+    }
+
+    else {
+      return res
+        .status(400)
+        .json({ error: "Either inputXml or inputJson must be provided" });
+    }
+
+    const nestedXmlObj = buildNestedXmlObject(mapping, flatInput, targetRootName);
+
+    const builder = new XMLBuilder({ format: true });
+    const finalXml = builder.build(nestedXmlObj);
+
+    res.set("Content-Type", "application/xml");
+    return res.send(finalXml);
+
+  } catch (err) {
+    console.error("Error in Transforming :", err);
+    res.status(500).json({ error: "Failed to transform XML", details: err.message });
+  }
 });
 
 app.listen(5000, () =>
