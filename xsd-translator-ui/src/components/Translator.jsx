@@ -13,6 +13,132 @@ export default function Translator() {
 
     const [outputXml, setOutputXml] = useState("");
     const [loading, setLoading] = useState(false);
+    const xsd="<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="IntegratedPartnerHomeQuote">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="RequestHeader">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Header">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="SpName" type="xs:string" minOccurs="0"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="IntegratedPartnetHomeQuoteInput">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Input">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="ACORD">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="InsuranceSvcRq">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="HomePolicyQuoteReq">
+                                  <xs:complexType>
+                                    <xs:sequence>
+                                      <xs:element name="InsuredOrPrincipal">
+                                        <xs:complexType>
+                                          <xs:sequence>
+                                            <xs:element name="InsuredOrPrincipalInfo">
+                                              <xs:complexType>
+                                                <xs:sequence>
+                                                  <xs:element name="ProducerInfo">
+                                                    <xs:complexType>
+                                                      <xs:sequence>
+                                                        <xs:element name="ContractNumber" type="xs:string" minOccurs="0"/>
+                                                      </xs:sequence>
+                                                    </xs:complexType>
+                                                  </xs:element>
+                                                  <xs:element name="GeneralPartyInfo">
+                                                    <xs:complexType>
+                                                      <xs:sequence>
+                                                        <xs:element name="NameInfo">
+                                                          <xs:complexType>
+                                                            <xs:sequence>
+                                                              <xs:element name="PersonName">
+                                                                <xs:complexType>
+                                                                  <xs:sequence>
+                                                                    <xs:element name="GivenName" type="xs:string" minOccurs="0"/>
+                                                                    <xs:element name="SurName" type="xs:string" minOccurs="0"/>
+                                                                  </xs:sequence>
+                                                                </xs:complexType>
+                                                              </xs:element>
+                                                            </xs:sequence>
+                                                          </xs:complexType>
+                                                        </xs:element>
+                                                      </xs:sequence>
+                                                    </xs:complexType>
+                                                  </xs:element>
+                                                </xs:sequence>
+                                              </xs:complexType>
+                                            </xs:element>
+                                          </xs:sequence>
+                                        </xs:complexType>
+                                      </xs:element>
+                                    </xs:sequence>
+                                  </xs:complexType>
+                                </xs:element>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>"
+
+    const jsonSchema="{
+  "$schema": http://json-schema.org/draft-07/schema#,
+  "title": "PartnerQuote",
+  "type": "object",
+  "properties": {
+    "quoteId": { "type": "string" },
+    "partnerId": { "type": "string" },
+    "customer": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "contact": { "type": "string" }
+      },
+      "required": ["name", "contact"]
+    },
+    "totalAmount": { "type": "number" },
+    "currency": { "type": "string" }
+  },
+  "required": ["quoteId", "partnerId", "customer", "totalAmount", "currency"]
+}"
+
+const xml="<PartnerQuote>
+  <quoteId>Q123456</quoteId>
+  <partnerId>P7890</partnerId>
+  <customer>
+    <name>Acme Corp</name>
+    <contact>john.doe@acme.com</contact>
+  </customer>
+  <totalAmount>377.5</totalAmount>
+  <currency>USD</currency>
+</PartnerQuote>
+"
+
+
 
     const generateMapping = async () => {
         if (!jsonSchema || !xmlXsd) {
